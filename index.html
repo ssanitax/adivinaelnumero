@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego de Adivinar el Número</title>
+
+<style>
+    /* Estilo claro tipo Apple */
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f2f2f7;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #1c1c1e;
+    }
+
+    .game-container {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        width: 360px;
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: 1.6rem;
+        text-align: center;
+        color: #111111;
+    }
+
+    p {
+        text-align: center;
+        color: #6e6e73;
+        font-size: 0.9rem;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 12px;
+        border: 1px solid #d1d1d6;
+        background: #f2f2f7;
+        color: #1c1c1e;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        background: #007aff;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+        background: #005bb5;
+        transform: scale(1.02);
+    }
+
+    button.secondary {
+        background: #e5e5ea;
+        color: #1c1c1e;
+    }
+
+    button.secondary:hover {
+        background: #d1d1d6;
+    }
+
+    .feedback {
+        margin-top: 15px;
+        text-align: center;
+        font-size: 1rem;
+        min-height: 24px;
+    }
+
+    .attempts {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #6e6e73;
+        margin-top: 4px;
+    }
+
+    .history {
+        margin-top: 15px;
+        background: #f2f2f7;
+        border-radius: 12px;
+        padding: 10px;
+        font-size: 0.85rem;
+        max-height: 140px;
+        overflow-y: auto;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .history-title {
+        font-size: 0.75rem;
+        color: #6e6e73;
+        margin-bottom: 6px;
+    }
+
+    .winner { color: #34c759; }
+    .loser { color: #ff3b30; }
+
+    .history-entry {
+        margin-bottom: 4px;
+        color: #1c1c1e;
+    }
+</style>
+</head>
+
+<body>
+<div class="game-container">
+    <h1>🎯 Adivina el número secreto</h1>
+    <p>Tienes 6 intentos (entre 1 y 50)</p>
+
+    <input type="number" id="guess" min="1" max="50" placeholder="Escribe un número..." />
+
+    <button onclick="checkGuess()">🎲 Intentar</button>
+    <button class="secondary" onclick="resetGame()">🔄 Reiniciar partida</button>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="attempts" id="attempts"></div>
+
+    <div class="history">
+        <div class="history-title">📜 Historial de intentos</div>
+        <div id="history"></div>
+    </div>
+</div>
+
+<script>
+let numeroSecreto;
+let intentos;
+const maxIntentos = 6;
+
+function initGame() {
+    numeroSecreto = Math.floor(Math.random() * 50) + 1;
+    intentos = 0;
+
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("feedback").className = "feedback";
+    document.getElementById("attempts").textContent = "";
+    document.getElementById("history").innerHTML = "";
+    document.getElementById("guess").disabled = false;
+}
+
+function checkGuess() {
+    const input = document.getElementById("guess");
+    const feedback = document.getElementById("feedback");
+    const attempts = document.getElementById("attempts");
+    const historyBox = document.getElementById("history");
+
+    const intento = parseInt(input.value);
+
+    if (isNaN(intento) || intento < 1 || intento > 50) {
+        feedback.textContent = "⚠️ Introduce un número válido (1–50)";
+        return;
+    }
+
+    intentos++;
+
+    let resultado;
+
+    if (intento === numeroSecreto) {
+        resultado = "✅ Correcto";
+        feedback.textContent = `🎉 ¡Exacto! El número era ${numeroSecreto}`;
+        feedback.classList.add("winner");
+        input.disabled = true;
+    } 
+    else if (intento > numeroSecreto) {
+        resultado = "📉 Demasiado alto";
+        feedback.textContent = "📉 Demasiado alto";
+    } 
+    else {
+        resultado = "📈 Demasiado bajo";
+        feedback.textContent = "📈 Demasiado bajo";
+    }
+
+    // Pista de par/impar desde el tercer intento
+    if (intentos >= 3 && intento !== numeroSecreto) {
+        const pista = numeroSecreto % 2 === 0 ? "💡 Pista: Es par" : "💡 Pista: Es impar";
+        feedback.textContent += ` • ${pista}`;
+    }
+
+    attempts.textContent = `Intentos: ${intentos}/${maxIntentos}`;
+
+    const entry = document.createElement("div");
+    entry.className = "history-entry";
+    entry.textContent = `Intento ${intentos}: ${intento} → ${resultado}`;
+    historyBox.prepend(entry); // historial inverso
+
+    if (intentos >= maxIntentos && intento !== numeroSecreto) {
+        feedback.textContent = `💀 Perdiste. El número era ${numeroSecreto}`;
+        feedback.classList.add("loser");
+        input.disabled = true;
+    }
+
+    input.value = "";
+}
+
+function resetGame() {
+    initGame();
+}
+
+initGame();
+</script>
+</body>
+</html>
